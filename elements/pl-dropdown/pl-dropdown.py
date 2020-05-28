@@ -1,14 +1,21 @@
 import prairielearn as pl
 import lxml.html
 import json
+import random
 import chevron
 import os
+from enum import Enum
 
 WEIGHT_DEFAULT = 1
 
+class SortTypes(Enum): 
+    RANDOM = 'random'
+    ASCEND = 'ascend'
+    DESCEND = 'descend'
+
 def prepare(element_html, data):
     element = lxml.html.fragment_fromstring(element_html)
-    pl.check_attribs(element, required_attribs=['options', 'answer', 'answer-key'], optional_attribs=['weight'])
+    pl.check_attribs(element, required_attribs=['options', 'answer', 'answer-key'], optional_attribs=['weight', 'sort'])
     name = pl.get_string_attrib(element, 'answer-key')
 
     correct_answer = pl.get_float_attrib(element, 'correct-answer', None)
@@ -20,7 +27,17 @@ def prepare(element_html, data):
 def render(element_html, data):
     element = lxml.html.fragment_fromstring(element_html)
     dropdown_options = json.loads(pl.get_string_attrib(element, 'options'))
+    sort = pl.get_string_attrib(element, 'sort', '').upper().strip()
+
     answer_key = pl.get_string_attrib(element, 'answer-key')
+
+    ## is original options list order
+    if sort == SortTypes.DESCEND.name:
+        dropdown_options.sort(reverse=True)
+    elif sort == SortTypes.ASCEND.name:
+        dropdown_options.sort(reverse=False)
+    elif sort == SortTypes.RANDOM.name: 
+        random.shuffle(dropdown_options)
 
     html_params = {
         'uuid': pl.get_uuid(),
@@ -62,9 +79,3 @@ def grade(element_html, data):
 
     answer = pl.get_string_attrib(element, 'answer')
     data['submitted_answers'][name] = answer
-
-
-def generate(element_html, data):
-    element = lxml.html.fragment_fromstring(element_html)
-    answer_key = pl.get_string_attrib(element, 'answer-key')
-    data['correct_answers']['species'] = pl.get_string_attrib(element, 'answer')
