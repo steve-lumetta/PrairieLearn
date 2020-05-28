@@ -50,6 +50,7 @@ def render(element_html, data):
 
     # Create and return html
     html_params = {'src': file_url, 'width': width}
+    
     with open('pl-figure.mustache', 'r', encoding='utf-8') as f:
         html = chevron.render(f, html_params).strip()
 

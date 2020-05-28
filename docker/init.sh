@@ -18,9 +18,9 @@ else
     # Uncomment to start redis to test message passing
     # redis-server --daemonize yes
 
-    if [[ $NODEMON == "true" ]]; then
-        npm run start-nodemon
+    if [[ -n $NODEMON ]] && [[ $NODEMON == "true" ]]; then
+        npm run start-nodemon -- inspect='0.0.0.0'
     else
-        npm start
+        npm start 
     fi
 fi

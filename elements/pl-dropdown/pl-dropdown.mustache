@@ -1,12 +1,10 @@
-<div id="pl-dropdown-{{uuid}}" class="pl-dropdown dropdown">
-	<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-	  Dropdown button
-    </button>
+<div id="pl-dropdown-{{uuid}}" class="pl-dropdown form-group">
+    <select name="{{answer-key}}" class="form-control">
     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
 
 {{#options}}
-	    <a class="dropdown-item" href="#">{{.}}</a>
+    <option value="{{.}}">{{.}}</option>
 {{/options}}
 
-	  </div>
+    </select>
 </div>
