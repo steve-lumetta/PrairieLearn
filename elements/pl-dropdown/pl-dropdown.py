@@ -89,12 +89,37 @@ def grade(element_html, data):
     element = lxml.html.fragment_fromstring(element_html)
     name = pl.get_string_attrib(element, 'answer-key')
     weight = pl.get_integer_attrib(element, 'weight', WEIGHT_DEFAULT)
-    answer = data['submitted_answers'].get(name, None)
+    submitted_answer = data['submitted_answers'].get(name, None)
     
-    if data['correct_answers'][name] == answer:
+    if data['correct_answers'][name] == submitted_answer:
         data['partial_scores'][name] = {'score': 1, 'weight': weight}
     else:
         data['partial_scores'][name] = {'score': 0, 'weight': weight}
 
     answer = pl.get_string_attrib(element, 'answer')
     data['submitted_answers'][name] = answer
+
+def test(element_html, data):
+    element = lxml.html.fragment_fromstring(element_html)
+    answer_key = pl.get_string_attrib(element, 'answer-key')
+    weight = pl.get_integer_attrib(element, 'weight', WEIGHT_DEFAULT)
+
+    ## correct_answer is what the answer should be
+    correct_answer = data['correct_answers'][answer_key]
+
+    ## incorrect and correct answer test cases
+    if data['test_type'] == 'correct':
+        data['raw_submitted_answers'][answer_key] = correct_answer
+        data['partial_scores'][answer_key] = {'score': 1, 'weight': weight}
+    elif data['test_type'] == 'incorrect':
+        data['partial_scores'][answer_key] = {'score': 0, 'weight': weight}
+    elif data['test_type'] == 'invalid':
+        ## Do we want to test for invalid drop-down options? Maybe
+        data['format_errors'][answer_key] = 'invalid'
+    else:
+        raise Exception('invalid result: %s' % data['test_type'])
+
+
+
+    if correct_answer is None:
+        raise Exception('Undefined answer_key')
