@@ -48,6 +48,7 @@ def render(element_html, data):
             'question': True,
             'uuid': pl.get_uuid(),
             'options': dropdown_options,
+            'answer-key': answer_key
         }
     elif data['panel'] == 'submission':
         html_params = {
