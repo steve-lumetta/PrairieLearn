@@ -16,16 +16,14 @@ class SortTypes(Enum):
 def prepare(element_html, data):
     element = lxml.html.fragment_fromstring(element_html)
     pl.check_attribs(element, required_attribs=['options', 'answer', 'answer-key'], optional_attribs=['weight', 'sort'])
-    name = pl.get_string_attrib(element, 'answer-key')
-    correct_answer = pl.get_float_attrib(element, 'correct-answer', None)
+    answer_key = pl.get_string_attrib(element, 'answer-key')
+    correct_answer = pl.get_string_attrib(element, 'answer')
 
-    if data['correct_answers'][name] == None:
-        raise Exception('Correct answer not defined for %s' % name)
-    
-    if correct_answer is not None:
-        if name in data['correct_answers']:
-            raise Exception('duplicate correct_answers variable name: %s' % name)
-        data['correct_answers'][name] = correct_answer
+    if data['correct_answers'][answer_key] == None:
+        raise Exception('Correct answer not defined for answer-key: %s' % answer_key)
+
+    data['correct_answers'][answer_key] = correct_answer
+
 
 def render(element_html, data):
     element = lxml.html.fragment_fromstring(element_html)
@@ -75,16 +73,12 @@ def render(element_html, data):
 def parse(element_html, data):
     html_element = lxml.html.fragment_fromstring(element_html)
     answer_key = pl.get_string_attrib(html_element, 'answer-key')
-    answer_options = json.loads(pl.get_string_attrib(html_element, 'options'))
     answer = data['submitted_answers'].get(answer_key, None)
 
     if answer is None:
         data['format_errors'][answer_key] = 'No answer was submitted.'
-        return
 
-    if answer not in answer_options:
-        data['format_errors'][answer_key] = f'Invalid choice: {pl.escape_invalid_string(answer_key)}'
-        return
+    return data
 
 def grade(element_html, data):
     element = lxml.html.fragment_fromstring(element_html)
@@ -97,9 +91,6 @@ def grade(element_html, data):
     else:
         data['partial_scores'][name] = {'score': 0, 'weight': weight}
 
-    answer = pl.get_string_attrib(element, 'answer')
-    data['submitted_answers'][name] = answer
-
 def test(element_html, data):
     element = lxml.html.fragment_fromstring(element_html)
     answer_key = pl.get_string_attrib(element, 'answer-key')
@@ -107,20 +98,19 @@ def test(element_html, data):
 
     ## correct_answer is what the answer should be
     correct_answer = data['correct_answers'][answer_key]
-
+    
     ## incorrect and correct answer test cases
     if data['test_type'] == 'correct':
-        data['raw_submitted_answers'][answer_key] = correct_answer
+        data['raw_submitted_answers'][answer_key] = data['correct_answers'][answer_key]
         data['partial_scores'][answer_key] = {'score': 1, 'weight': weight}
     elif data['test_type'] == 'incorrect':
+        # print('incorrect test type ' + correct_answer)
+        data['raw_submitted_answers'][answer_key] = 'wise'
         data['partial_scores'][answer_key] = {'score': 0, 'weight': weight}
     elif data['test_type'] == 'invalid':
-        ## Do we want to test for invalid drop-down options? Maybe
+        # print('invalid test type ' + correct_answer)
+        ## Test for invalid drop-down options in case injection on front-end
+        data['raw_submitted_answers'][answer_key] = '0'
         data['format_errors'][answer_key] = 'invalid'
     else:
         raise Exception('invalid result: %s' % data['test_type'])
-
-
-
-    if correct_answer is None:
-        raise Exception('Undefined answer_key')
