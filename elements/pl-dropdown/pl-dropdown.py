@@ -71,14 +71,18 @@ def render(element_html, data):
     return html
 
 def parse(element_html, data):
-    html_element = lxml.html.fragment_fromstring(element_html)
-    answer_key = pl.get_string_attrib(html_element, 'answer-key')
+    element = lxml.html.fragment_fromstring(element_html)
+    answer_key = pl.get_string_attrib(element, 'answer-key')
     answer = data['submitted_answers'].get(answer_key, None)
+
+    valid_options = json.loads(pl.get_string_attrib(element, 'options'))
 
     if answer is None:
         data['format_errors'][answer_key] = 'No answer was submitted.'
-
-    return data
+    
+    if answer not in valid_options:
+        data['format_errors'][answer_key] = 'Invalid answer submitted.'
+    
 
 def grade(element_html, data):
     element = lxml.html.fragment_fromstring(element_html)
@@ -104,13 +108,18 @@ def test(element_html, data):
         data['raw_submitted_answers'][answer_key] = data['correct_answers'][answer_key]
         data['partial_scores'][answer_key] = {'score': 1, 'weight': weight}
     elif data['test_type'] == 'incorrect':
-        # print('incorrect test type ' + correct_answer)
-        data['raw_submitted_answers'][answer_key] = 'wise'
+        dropdown_options = json.loads(pl.get_string_attrib(element, 'options'))
+        incorrect_ans = ''
+
+        for option in dropdown_options:
+            if option != data['correct_answers'][answer_key]:
+                incorrect_ans = option
+
+        data['raw_submitted_answers'][answer_key] = incorrect_ans
         data['partial_scores'][answer_key] = {'score': 0, 'weight': weight}
     elif data['test_type'] == 'invalid':
-        # print('invalid test type ' + correct_answer)
         ## Test for invalid drop-down options in case injection on front-end
-        data['raw_submitted_answers'][answer_key] = '0'
-        data['format_errors'][answer_key] = 'invalid'
+        data['raw_submitted_answers'][answer_key] = 'INVALID STRING'
+        data['format_errors'][answer_key] = 'format error message'
     else:
         raise Exception('invalid result: %s' % data['test_type'])
