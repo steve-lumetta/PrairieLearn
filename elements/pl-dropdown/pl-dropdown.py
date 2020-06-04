@@ -15,15 +15,16 @@ class SortTypes(Enum):
 
 def prepare(element_html, data):
     element = lxml.html.fragment_fromstring(element_html)
-    pl.check_attribs(element, required_attribs=['options', 'answer', 'answer-key'], optional_attribs=['weight', 'sort'])
+    pl.check_attribs(element, required_attribs=['options', 'answer-key'], optional_attribs=['weight', 'answer', 'sort'])
     answer_key = pl.get_string_attrib(element, 'answer-key')
-    correct_answer = pl.get_string_attrib(element, 'answer')
+    correct_answer = pl.get_string_attrib(element, 'answer', None)
+
+    ## Set correct answer from HTML attrib if given
+    if correct_answer != None:
+        data['correct_answers'][answer_key] = correct_answer
 
     if data['correct_answers'][answer_key] == None:
         raise Exception('Correct answer not defined for answer-key: %s' % answer_key)
-
-    data['correct_answers'][answer_key] = correct_answer
-
 
 def render(element_html, data):
     element = lxml.html.fragment_fromstring(element_html)
