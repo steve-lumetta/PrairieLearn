@@ -50,7 +50,7 @@ images, files, and code display. The following **decorative** elements are avail
   appropriate LaTeX commands for use in a mathematical expression.
 - [`pl-prairiedraw-figure`](#pl-prairiedraw-figure-element): Show a PrairieDraw
   figure.
-- [`pl-python-variable`](#pl-python-variable): Display formatted output of Python 
+- [`pl-python-variable`](#pl-python-variable): Display formatted output of Python
   variables and pandas data frames.
 - [`pl-graph`](#pl-graph-element): Displays graphs, either using GraphViz DOT notation
   or with an adjacency matrix.
@@ -170,6 +170,7 @@ a `pl-answer` that has attributes:
 Attribute | Type | Default | Description
 --- | --- | --- | ---
 `correct` | boolean | false | Is this a correct answer to the question?
+`always-shown` | boolean | false | Should this answer always be displayed?
 
 #### Details
 
@@ -207,7 +208,7 @@ tolerances.
 
 **server.py**
 ```python
-import random 
+import random
 
 def generate(data):
 
@@ -218,7 +219,7 @@ def generate(data):
   data["correct_answers"]["ans_rtol"] = x
 ```
 
----- 
+----
 
 ![](elements/pl-number-input-sigfig.png)
 
@@ -230,7 +231,7 @@ def generate(data):
 
 **server.py**
 ```python
-import random 
+import random
 
 def generate(data):
 
@@ -290,7 +291,7 @@ Fill in the blank field that requires an **integer** input.
 
 **server.py**
 ```python
-import random 
+import random
 
 def generate(data):
 
@@ -345,7 +346,7 @@ import prairielearn as pl
 import sympy
 
 def generate(data):
-  
+
   # Declare math symbols
   x, y = sympy.symbols('x y')
 
@@ -547,8 +548,8 @@ Attribute | Type | Default | Description
 
 #### Details
 
-`pl-matrix-input` parses a matrix entered in either `MATLAB` or `Python` formats. 
-The following are valid input format options: 
+`pl-matrix-input` parses a matrix entered in either `MATLAB` or `Python` formats.
+The following are valid input format options:
 
 **MATLAB format:**
 ```
@@ -993,7 +994,7 @@ def generate(data):
   matrixD = np.matrix('-1 4; 3 2')
   # Random matrices can be generated with:
   # mat = np.random.random((2, 2))
-  
+
   # Export each matrix as a JSON object for the question view.
   data['params']['matrixC'] = pl.to_json(matrixC)
   data['params']['matrixD'] = pl.to_json(matrixD)
@@ -1093,10 +1094,10 @@ import prairielearn as pl
 import numpy as np
 
 def generate(data):
-  
+
   # Construct a matrix
   mat = np.matrix('1 2; 3 4')
-  
+
   # Export matrix to be displayed in question.html
   data['params']['matrixC'] = pl.to_json(mat)
 ```
@@ -1113,14 +1114,14 @@ Attribute | Type | Default | Description
 #### Details
 
 Depending on whether `data['params']` contains either a scalar or 2D numpy array of numbers,
-one of the following will be returned. 
+one of the following will be returned.
 
 - **scalar**
     - a string containing the scalar not wrapped in brackets.
 - **numpy 2D array**
     - a string formatted using the `bmatrix` LaTeX style.
 
-Sample LaTeX formatting: 
+Sample LaTeX formatting:
 
 ```latex
 \begin{bmatrix} ... & ... \\ ... & ... \end{bmatrix}
@@ -1188,7 +1189,7 @@ The provided `script-name` corresponds to a file located within the director for
 
 ## `pl-graph` element
 
-Using the [viz.js](https://github.com/mdaines/viz.js/) library, create 
+Using the [viz.js](https://github.com/mdaines/viz.js/) library, create
 Graphviz DOT visualizations.
 
 #### Sample Elements
