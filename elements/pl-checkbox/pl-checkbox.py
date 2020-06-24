@@ -14,6 +14,9 @@ HIDE_ANSWER_PANEL_DEFAULT = False
 HIDE_HELP_TEXT_DEFAULT = False
 DETAILED_HELP_TEXT_DEFAULT = False
 
+ANSWER_CORRECT_DEFAULT = False
+ANSWER_ALWAYS_SHOWN_DEFAULT = False
+
 
 def prepare(element_html, data):
     element = lxml.html.fragment_fromstring(element_html)
@@ -29,31 +32,50 @@ def prepare(element_html, data):
     if not partial_credit and partial_credit_method is not None:
         raise Exception('Cannot specify partial-credit-method if partial-credit is not enabled')
 
+    correct_required = []
     correct_answers = []
+    incorrect_required = []
     incorrect_answers = []
     index = 0
     for child in element:
         if child.tag in ['pl-answer', 'pl_answer']:
-            pl.check_attribs(child, required_attribs=[], optional_attribs=['correct'])
-            correct = pl.get_boolean_attrib(child, 'correct', False)
+            pl.check_attribs(child, required_attribs=[], optional_attribs=['correct', 'always-shown'])
+            correct = pl.get_boolean_attrib(child, 'correct', ANSWER_CORRECT_DEFAULT)
+            always_appear = pl.get_boolean_attrib(child, 'always-shown', ANSWER_ALWAYS_SHOWN_DEFAULT)
             child_html = pl.inner_html(child)
             answer_tuple = (index, correct, child_html)
-            if correct:
-                correct_answers.append(answer_tuple)
+            if always_appear:
+                if correct:
+                    correct_required.append(answer_tuple)
+                else:
+                    incorrect_required.append(answer_tuple)
             else:
-                incorrect_answers.append(answer_tuple)
+                if correct:
+                    correct_answers.append(answer_tuple)
+                else:
+                    incorrect_answers.append(answer_tuple)
             index += 1
 
     len_correct = len(correct_answers)
+    len_correct_req = len(correct_required)
     len_incorrect = len(incorrect_answers)
+    len_incorrect_req = len(incorrect_required)
+    len_req = len_correct_req + len_incorrect_req
     len_total = len_correct + len_incorrect
 
     if len_correct == 0:
         raise ValueError('At least one option must be true.')
 
     number_answers = pl.get_integer_attrib(element, 'number-answers', len_total)
-    min_correct = pl.get_integer_attrib(element, 'min-correct', 1)
+    min_correct = max(0, pl.get_integer_attrib(element, 'min-correct', 1))
     max_correct = pl.get_integer_attrib(element, 'max-correct', len(correct_answers))
+
+    if len(correct_required) > max_correct:
+        raise ValueError(f'Requiring {len_correct_req} always-shown correct answers when the maximum is {max_correct}.')
+    if len(incorrect_required) > number_answers - min_correct:
+        raise ValueError(f'Requiring {len_incorrect_req} always-shown incorrect answers when the maximum is {number_answers - min_correct}.')
+    if len_req > number_answers:
+        raise ValueError(f'Requiring {len_req} always-shown answers when the maximum is {number_answers}')
 
     if min_correct < 1:
         raise ValueError('The attribute min-correct is {:d} but must be at least 1'.format(min_correct))
@@ -61,7 +83,7 @@ def prepare(element_html, data):
     # FIXME: why enforce a maximum number of options?
     max_answers = 26  # will not display more than 26 checkbox answers
 
-    number_answers = max(0, min(len_total, min(max_answers, number_answers)))
+    number_answers = max(0, min(len_total, min(max_answers, number_answers - (len_correct_req + len_incorrect_req))))
     min_correct = min(len_correct, min(number_answers, max(0, max(number_answers - len_incorrect, min_correct))))
     max_correct = min(len_correct, min(number_answers, max(min_correct, max_correct)))
     if not (0 <= min_correct <= max_correct <= len_correct):
@@ -74,8 +96,8 @@ def prepare(element_html, data):
     number_correct = random.randint(min_correct, max_correct)
     number_incorrect = number_answers - number_correct
 
-    sampled_correct = random.sample(correct_answers, number_correct)
-    sampled_incorrect = random.sample(incorrect_answers, number_incorrect)
+    sampled_correct = correct_required + random.sample(correct_answers, number_correct)
+    sampled_incorrect = incorrect_required + random.sample(incorrect_answers, number_incorrect)
 
     sampled_answers = sampled_correct + sampled_incorrect
     random.shuffle(sampled_answers)
